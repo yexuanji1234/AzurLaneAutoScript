@@ -63,7 +63,24 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
 
         # Init
         self.zone_init()
-
+        # CL1 hazard leveling pre-scan
+        #try:
+        #    if getattr(self, "is_in_task_cl1_leveling", False) or getattr(self, "is_cl1_enabled", False):
+        #        logger.info("Detected CL1 leveling on enter: run auto-search then full map rescan to clear events")
+        #        try:
+        #            self.run_auto_search(question=True, rescan='full', after_auto_search=True)
+        #        except CampaignEnd:
+        #        except RequestHumanTakeover:
+        #            logger.warning("Require human takeover during CL1 pre-scan, aborting auto-scan")
+        #        except Exception as e:
+        #            logger.exception(e)
+        #        try:
+        #            self.map_rescan(rescan_mode='full')
+        #        except Exception as e:
+        #            logger.exception(e)
+        #except Exception:
+        #    logger.debug("CL1 pre-scan check skipped due to unexpected condition")
+            
         # self.map_init()
         self.hp_reset()
         self.handle_after_auto_search()
@@ -948,3 +965,166 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         logger.warning('Too many trial on map rescan, stop')
         self.fleet_set(self.config.OpsiFleet_Fleet)
         return False
+
+    def safe_swipe(self, start, end, duration=500, retries=2):
+        """
+        在多次滑动/重试场景下的安全滑动：
+         - 清理设备的卡住/点击历史记录
+         - 使用较长时长与间隔，减少被识别为无效滑动的概率
+        """
+        for attempt in range(1, retries + 1):
+            try:
+                try:
+                    self.device.stuck_record_clear()
+                except Exception:
+                    pass
+                self.device.swipe(start, end, duration=duration)
+                time.sleep(0.45)
+                return True
+            except Exception as e:
+                logger.warning(f'safe_swipe attempt {attempt} failed: {e}')
+                time.sleep(0.4)
+                continue
+        return False
+
+    # 基于ShaddockNH3极致侵蚀一的个人修改
+    def _execute_fixed_patrol_scan(self, ExecuteFixedPatrolScan: bool = False, **kwargs):
+        """
+        该函数在指挥每支舰队移动前，都会先执行一次强制的视角复位，
+        然后精确指挥1-4号舰队前往预设的网格坐标，并在所有舰队
+        移动到位后，执行一次清除了残留状态的全图扫描。
+        """
+        logger.hr('执行定点巡逻扫描')
+
+        if not ExecuteFixedPatrolScan:
+            logger.info('ExecuteFixedPatrolScan 未启用，跳过定点巡逻。')
+            return
+        logger.attr('ExecuteFixedPatrolScan', True)
+
+        self.map_init(map_=None)
+        if not hasattr(self, 'map') or not self.map.grids:
+            logger.warning('无法获取当前地图网格数据，已跳过定点巡逻。')
+            return
+
+        # solved = getattr(self, '_solved_map_event', set())
+        # if any(k in solved for k in ('is_akashi', 'is_scanning_device', 'is_logging_tower')):
+        #     logger.info('彩蛋：雪风大人保佑你，本次定点巡逻已跳过')
+        #     return
+
+        patrol_locations = [(2, 0), (3, 0), (4, 0), (5, 0)]  # 对应 C1, D1, E1, F1
+
+        for i, target_loc in enumerate(patrol_locations):
+            fleet_index = i + 1
+
+            target_grid_group = self.map.select(location=target_loc)
+            if not target_grid_group:
+                logger.warning(f'在地图上找不到坐标为 {target_loc} 的格子，跳过舰队 {fleet_index} 的移动。')
+                continue
+            target_grid = target_grid_group[0]
+
+            logger.hr(f'定点巡逻: 指挥舰队 {fleet_index} 前往 {target_grid}', level=2)
+
+            self.fleet_set(fleet_index)
+
+            logger.info('执行视角复位，强制滑动到地图顶端...')
+
+            top_point = (640, 150)
+            bottom_point = (640, 600)
+            quick_ok = True
+            try:
+                for _ in range(2):
+                    self.device.swipe(top_point, bottom_point, duration=300)
+                    time.sleep(0.18)
+            except Exception:
+                quick_ok = False
+                logger.debug('快速滑动复位遇到异常，尝试安全滑动')
+
+            if not quick_ok:
+                if not self.safe_swipe(top_point, bottom_point, duration=550, retries=2):
+                    logger.warning('视角复位（安全滑动）失败，继续尝试下一步')
+                else:
+                    logger.info('视角复位（安全滑动）完成。')
+            else:
+                logger.info('快速滑动复位完成。')
+            time.sleep(0.45)
+
+            self.focus_to(target_grid.location)
+            self.update()
+            clickable_grid_group = self.view.select(location=target_loc)
+            if not clickable_grid_group:
+                logger.warning(f'已将视角移动到 {target_loc}，但在视野中找不到可点击的格子。')
+                continue
+
+            for try_idx in range(2):
+                try:
+                    try:
+                        self.device.stuck_record_clear()
+                    except Exception:
+                        pass
+                    time.sleep(0.08)
+                    self.device.click(clickable_grid_group[0])
+                    self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
+                    logger.info(f'舰队 {fleet_index} 已到达 {target_grid}。')
+                    break
+                except (MapWalkError, GameTooManyClickError) as e:
+                    logger.warning(f'舰队移动异常: {e}，尝试强制恢复（{try_idx + 1}/2）')
+                    recovered = False
+                    try:
+                        recovered = self._force_move_recover(target_zone=self.zone if self.zone else None)
+                    except Exception:
+                        recovered = False
+                    if recovered:
+                        time.sleep(0.5)
+                        continue
+                    logger.warning('尝试软恢复（back / screenshot / rebuild view）')
+                    try:
+                        for _ in range(3):
+                            try:
+                                self.device.back()
+                            except Exception:
+                                pass
+                            time.sleep(0.25)
+                        self.device.screenshot()
+                        try:
+                            self.ui_ensure(page_os)
+                            self.map_init(map_=None)
+                            self.update()
+                        except Exception:
+                            logger.debug('重建视图失败（soft recovery）', exc_info=True)
+                        clickable_grid_group = self.view.select(location=target_loc)
+                        if clickable_grid_group:
+                            logger.info('软恢复后找到格子，重试点击')
+                            try:
+                                time.sleep(0.3)
+                                self.device.click(clickable_grid_group[0])
+                                self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
+                                logger.info('软恢复成功，舰队已到达')
+                                break
+                            except Exception:
+                                logger.debug('软恢复重试点击失败', exc_info=True)
+                    except Exception as rec_e:
+                        logger.debug(f'软恢复过程出现异常: {rec_e}')
+                    if try_idx == 1:
+                        logger.warning('软恢复失败，放弃重启。跳过该舰队并切换至下一舰队继续任务')
+                        try:
+                            next_fleet = (fleet_index % 4) + 1
+                            logger.info(f'切换舰队 {fleet_index} -> {next_fleet}')
+                            self.fleet_set(next_fleet)
+                        except Exception:
+                            logger.error('切换舰队过程出现异常，继续下一步', exc_info=True)
+                        recovered = False
+                        break
+                    time.sleep(0.5)
+
+        backup = self.config.temporary(OpsiGeneral_RepairThreshold=-1, Campaign_UseAutoSearch=False)
+        try:
+            logger.info('所有舰队已定点，执行最终全图重扫（双遍检查）')
+            self._solved_map_event = set()
+            for _ in range(2):
+                try:
+                    self.map_rescan(rescan_mode='full')
+                except Exception as e:
+                    logger.debug(f'最终全图重扫出现异常，继续重试: {e}', exc_info=True)
+                    time.sleep(0.6)
+        finally:
+            backup.recover()

@@ -450,6 +450,11 @@ class OperationSiren(OSMap):
             self.fleet_set(self.config.OpsiFleet_Fleet)
             self.run_strategic_search()
 
+            if self.config.OpsiHazard1Leveling_ExecuteFixedPatrolScan:
+                exec_fixed = getattr(self.config, 'OpsiHazard1Leveling_ExecuteFixedPatrolScan', False)
+                if exec_fixed:
+                    self._execute_fixed_patrol_scan(ExecuteFixedPatrolScan=True)
+
             self.handle_after_auto_search()
             self.config.check_task_switch()
 
