@@ -424,7 +424,7 @@ class AlasGUI(Frame):
 
         with use_scope("schedulers"):
             if State.last_screenshot_base64 is not None:
-                img_html = f'<img id="screenshot-img" src="data:image/png;base64,{State.last_screenshot_base64}" style="height:100%; width:100%;">'
+                img_html = f'<img id="screenshot-img" src="data:image/jpg;base64,{State.last_screenshot_base64}" style="height:100%; width:100%;">'
                 put_scope("image-container", [put_html(img_html)])
             else:
                 put_scope(
@@ -808,12 +808,77 @@ class AlasGUI(Frame):
 
         if img_base64 is not None and img_base64 != self.last_displayed_screenshot_base64:
             self.last_displayed_screenshot_base64 = img_base64
+            # run_js(f'''
+            #     var img = document.getElementById("screenshot-img");
+            #     if (img) {{
+            #         img.src = "data:image/jpg;base64,{img_base64}";
+            #         img.style.width = "400px";  
+            #         img.style.height = "auto";   
+            #     }}
+            # ''')
             run_js(f'''
+            (function(){{
+                var src = "data:image/jpg;base64,{img_base64}";
                 var img = document.getElementById("screenshot-img");
-                if (img) {{
-                    img.src = "data:image/png;base64,{img_base64}";
+                if (!img) {{
+                    return;
                 }}
-            ''')
+                img.style.maxWidth = "100%";
+                img.style.maxHeight = "240px"; 
+                img.style.height = "auto";
+                img.style.cursor = "zoom-in";
+                img.style.transform = ""; 
+                
+                var modal = document.getElementById("screenshot-modal");
+                if (!modal) {{
+                    modal = document.createElement("div");
+                    modal.id = "screenshot-modal";
+                    Object.assign(modal.style, {{
+                        position: "fixed",
+                        left: 0,
+                        top: 0,
+                        width: "100vw",
+                        height: "100vh",
+                        display: "none",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        background: "rgba(0,0,0,0.65)",
+                        zIndex: 99999,
+                        overflow: "auto",
+                        padding: "20px",
+                        boxSizing: "border-box"
+                    }});
+                    var modalImg = document.createElement("img");
+                    modalImg.id = "screenshot-modal-img";
+                    Object.assign(modalImg.style, {{
+                        maxWidth: "90vw",
+                        maxHeight: "90vh",
+                        objectFit: "contain",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.5)"
+                    }});
+                    modal.appendChild(modalImg);
+                    modal.addEventListener("click", function(e) {{
+                        if (e.target === modal || e.target === modalImg) modal.style.display = "none";
+                    }});
+                    document.body.appendChild(modal);
+                    document.addEventListener("keydown", function(e) {{
+                        if (e.key === "Escape") modal.style.display = "none";
+                    }});
+                }}
+                
+                img.src = src;
+                var modalImgEl = document.getElementById("screenshot-modal-img");
+                if (modalImgEl) modalImgEl.src = src;
+                img.onclick = function() {{
+                    var m = document.getElementById("screenshot-modal");
+                    var mi = document.getElementById("screenshot-modal-img");
+                    if (m && mi) {{
+                        mi.src = this.src;
+                        m.style.display = "flex";
+                    }}
+                }};
+            }})();
+        ''')
         elif img_base64 is None:
             run_js('''
                 var img = document.getElementById("screenshot-img");

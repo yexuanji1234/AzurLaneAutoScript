@@ -27,7 +27,7 @@ class ProcessManager:
 
     def __init__(self, config_name: str = "alas") -> None:
         self.config_name = config_name
-        self._renderable_queue: queue.Queue = State.manager.Queue()
+        self._renderable_queue: queue.Queue[ConsoleRenderable] = State.manager.Queue()
         import multiprocessing
         self._screenshot_data_queue: multiprocessing.Queue = multiprocessing.Queue(maxsize=8)
         self.renderables: List[ConsoleRenderable] = []
