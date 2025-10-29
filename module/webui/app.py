@@ -548,7 +548,7 @@ class AlasGUI(Frame):
         if 'Maa' not in self.ALAS_ARGS:
             self.task_handler.add(self.alas_update_dashboard, 10, True)
         self.task_handler.add(log.put_log(self.alas), 0.25, True)
-        self.task_handler.add(self.update_screenshot_display, 1, True)
+        self.task_handler.add(self.update_screenshot_display, 0.5, True)
 
     def set_dashboard_display(self, b):
         self._log.set_dashboard_display(b)
