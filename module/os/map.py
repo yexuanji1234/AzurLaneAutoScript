@@ -966,7 +966,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
         self.fleet_set(self.config.OpsiFleet_Fleet)
         return False
 
-    def safe_swipe(self, start, end, duration=500, retries=2):
+    def safe_swipe(self, start, end, duration=0.5, retries=2):
         """
         在多次滑动/重试场景下的安全滑动：
          - 清理设备的卡住/点击历史记录
@@ -1033,14 +1033,14 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
             quick_ok = True
             try:
                 for _ in range(2):
-                    self.device.swipe(top_point, bottom_point, duration=300)
+                    self.device.swipe(top_point, bottom_point, duration=0.3)
                     time.sleep(0.18)
             except Exception:
                 quick_ok = False
                 logger.debug('快速滑动复位遇到异常，尝试安全滑动')
 
             if not quick_ok:
-                if not self.safe_swipe(top_point, bottom_point, duration=550, retries=2):
+                if not self.safe_swipe(top_point, bottom_point, duration=0.55, retries=2):
                     logger.warning('视角复位（安全滑动）失败，继续尝试下一步')
                 else:
                     logger.info('视角复位（安全滑动）完成。')
@@ -1061,7 +1061,7 @@ class OSMap(OSFleet, Map, GlobeCamera, StrategicSearchHandler):
                         self.device.stuck_record_clear()
                     except Exception:
                         pass
-                    time.sleep(0.08)
+                    time.sleep(0.1)
                     self.device.click(clickable_grid_group[0])
                     self.wait_until_walk_stable(confirm_timer=Timer(1.5, count=4))
                     logger.info(f'舰队 {fleet_index} 已到达 {target_grid}。')
