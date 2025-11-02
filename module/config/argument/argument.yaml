@@ -796,6 +796,7 @@ OpsiHazard1Leveling:
   TargetZone:
     value: 0
     option: [ 0, 44, 22 ]
+  MinimumActionPointReserve: 200        
   ExecuteFixedPatrolScan: false
 
 # ==================== Tools ====================

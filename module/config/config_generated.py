@@ -499,6 +499,7 @@ class GeneratedConfig:
 
     # Group `OpsiHazard1Leveling`
     OpsiHazard1Leveling_TargetZone = 0  # 0, 44, 22
+    OpsiHazard1Leveling_MinimumActionPointReserve = 200   
     OpsiHazard1Leveling_ExecuteFixedPatrolScan = False
 
     # Group `Daemon`

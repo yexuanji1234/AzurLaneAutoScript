@@ -2768,6 +2768,10 @@
       "44": "44 | 西大陆架D",
       "22": "22 | NA海域西南B"
     },
+    "MinimumActionPointReserve": {
+      "name": "保留 X 点行动力",
+      "help": "搏一搏，单车变摩托，雪风大人已经把幸运分给指挥官了nanoda，上吧nanoda！"
+    },
     "ExecuteFixedPatrolScan": {
       "name": "舰队强制移动",
       "help": "雪风大人温馨提示：开启后，将强制移动舰队以免找不到明石，指挥官你也不想因为找不到明石导致坠机nanoda？打开这个功能轻轻松松达到50万海里每月nanoda，指挥官还在等什么nanoda!"
