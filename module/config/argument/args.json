@@ -9349,6 +9349,10 @@
           22
         ]
       },
+      "SirenResearch_Enable": {
+        "type": "checkbox",
+        "value": false
+      },
       "MinimumActionPointReserve": {
         "type": "input",
         "value": 200

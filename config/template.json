@@ -1960,6 +1960,7 @@
     },
     "OpsiHazard1Leveling": {
       "TargetZone": 0,
+      "SirenResearch_Enable": false,
       "MinimumActionPointReserve": 200,            
       "ExecuteFixedPatrolScan": false
     },
