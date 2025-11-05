@@ -430,7 +430,7 @@ class AlasGUI(Frame):
                 put_scope(
                     "image-container",
                     [
-                        put_html('<img id="screenshot-img" src="/static/assets/spa/screen.png" style="height:100%; width:100%;">')
+                        put_html(f'<img id="screenshot-img" src="{State.get_placeholder_url()}" style="height:100%; width:100%;">')
                     ],
                 )
             put_scope(
@@ -553,6 +553,7 @@ class AlasGUI(Frame):
 
         with use_scope("screenshot_btn", clear=True):
             label = "看见了nanoda" if getattr(State, "display_screenshots", False) else "看不见nanoda"
+
             def _toggle_screenshot(_=None):
                 State.display_screenshots = not getattr(State, "display_screenshots", False)
                 if State.display_screenshots:
@@ -561,10 +562,30 @@ class AlasGUI(Frame):
                     except Exception:
                         pass
                 else:
-                    run_js('var img=document.getElementById("screenshot-img"); if(img) img.src="/static/assets/spa/screen.png";')
+                    run_js(f'var img=document.getElementById("screenshot-img"); if(img) img.src="{State.get_placeholder_url()}";')
+                try:
+                    for pm in ProcessManager.running_instances():
+                        try:
+                            pm.set_screenshot_enabled(State.display_screenshots)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
                 with use_scope("screenshot_btn", clear=True):
-                    put_buttons([ "看见了nanoda" if State.display_screenshots else "看不见nanoda" ], [ _toggle_screenshot ], small=True)
-            put_buttons([label], [_toggle_screenshot], small=True)
+                    put_buttons([
+                        "看见了nanoda" if State.display_screenshots else "看不见nanoda",
+                        "切换占位图",
+                    ], [ _toggle_screenshot, _switch_placeholder ], small=True)
+
+            def _switch_placeholder(_=None):
+                try:
+                    url = State.toggle_placeholder()
+                    run_js(f'var img=document.getElementById("screenshot-img"); if(img) img.src="{url}";')
+                    toast(t("雪风大人的图片已切换") if hasattr(t, '__call__') else "占位图已切换", duration=1)
+                except Exception:
+                    pass
+
+            put_buttons([label, "切换占位图"], [_toggle_screenshot, _switch_placeholder], small=True)
 
     def set_dashboard_display(self, b):
         self._log.set_dashboard_display(b)
@@ -815,7 +836,7 @@ class AlasGUI(Frame):
         img_base64 = None
         if hasattr(self, 'alas') and self.alas.alive:
             try:
-                img_base64 = self.alas.get_latest_screenshot
+                img_base64 = self.alas.get_latest_screenshot()
             except Exception as e:
                 logger.error(f"从调度器获取截图失败: {e}")
                 with use_scope("image-container", clear=True):
@@ -976,10 +997,10 @@ class AlasGUI(Frame):
             js = js.replace('<<IMG>>', img_base64)
             run_js(js)
         elif img_base64 is None:
-            run_js('''
+            run_js(f'''
                 var img = document.getElementById("screenshot-img");
                 if (img) {{
-                    img.src = "/static/assets/spa/screen.png";
+                    img.src = "{State.get_placeholder_url()}";
                 }}
             ''')
 

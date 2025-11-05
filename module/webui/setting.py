@@ -60,6 +60,28 @@ class State:
     electron: bool = False
     theme: str = "default"
     last_screenshot_base64: str = None
+    placeholder_images: list = [
+        "screen1.png",
+        "screen2.jpg",
+        "screen3.jpg",
+        "screen4.jpg",
+        "screen5.png",
+        "screen6.png",
+        "screen7.png",
+        "screen8.jpg",
+        "screen9.png",
+    ]
+    placeholder_index: int = 0
+
+    @classmethod
+    def get_placeholder_url(cls) -> str:
+        name = cls.placeholder_images[cls.placeholder_index % len(cls.placeholder_images)]
+        return f"/static/assets/spa/{name}"
+
+    @classmethod
+    def toggle_placeholder(cls) -> str:
+        cls.placeholder_index = (cls.placeholder_index + 1) % len(cls.placeholder_images)
+        return cls.get_placeholder_url()
     
     @classmethod
     def init(cls):

@@ -25,7 +25,8 @@ from module.logger import logger
 
 class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
     
-    def __init__(self, screenshot_queue=None, *args, **kwargs):
+    def __init__(self, screenshot_queue=None, screenshot_enabled=None, *args, **kwargs):
+        self._screenshot_enabled = screenshot_enabled
         super().__init__(*args, **kwargs)
         self.screenshot_queue = screenshot_queue
         self._latest_frames = deque(maxlen=2)  
@@ -313,6 +314,18 @@ class Screenshot(Adb, WSA, DroidCast, AScreenCap, Scrcpy, NemuIpc, LDOpenGL):
             if getattr(self, '_encoder_paused', False):
                 time.sleep(0.1)
                 continue
+            if getattr(self, '_screenshot_enabled', None) is not None:
+                try:
+                    if not bool(self._screenshot_enabled.value):
+                        with self._encode_lock:
+                            try:
+                                self._latest_frames.clear()
+                            except Exception:
+                                pass
+                        time.sleep(0.1)
+                        continue
+                except Exception:
+                    pass
             try:
                 if not self._latest_frames:
                     time.sleep(0.05)
