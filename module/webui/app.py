@@ -836,7 +836,7 @@ class AlasGUI(Frame):
         img_base64 = None
         if hasattr(self, 'alas') and self.alas.alive:
             try:
-                img_base64 = self.alas.get_latest_screenshot()
+                img_base64 = self.alas.get_latest_screenshot
             except Exception as e:
                 logger.error(f"从调度器获取截图失败: {e}")
                 with use_scope("image-container", clear=True):
