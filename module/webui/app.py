@@ -77,6 +77,7 @@ from module.webui.utils import (
     filepath_css,
     get_alas_config_listen_path,
     get_localstorage,
+    set_localstorage,
     get_window_visibility_state,
     login,
     parse_pin_value,
@@ -1608,6 +1609,70 @@ class AlasGUI(Frame):
                 onclick=lambda t: set_theme(t),
             ).style("text-align: center")
 
+            # Show a one-time blue-themed popup introducing the new 碧蓝主题 (Azur Lane)
+            # Skip showing if the current theme is already azurlane (no need to promote)
+            try:
+                popup_key = "alas_azurlane_theme_notice_shown"
+                current_theme = getattr(State.deploy_config, 'Theme', None) or getattr(self, 'theme', None)
+                if current_theme == 'azurlane':
+                    pass
+                else:
+                    val = get_localstorage(popup_key)
+                    if val != "1":
+                        def _apply_azurlane(_=None):
+                            try:
+                                set_localstorage(popup_key, "1")
+                            except Exception:
+                                pass
+                            set_theme("azurlane")
+                            try:
+                                close_popup()
+                            except Exception:
+                                pass
+
+                        def _dismiss(_=None):
+                            try:
+                                set_localstorage(popup_key, "1")
+                            except Exception:
+                                pass
+                            try:
+                                close_popup()
+                            except Exception:
+                                pass
+
+                        modal_style = (
+                            "<style>"
+                            " /* Simple azurlane blue modal for azurlane popup */"
+                            " .modal-backdrop{background-color: rgba(0,0,0,0.25) !important;}"
+                            " .modal.show .modal-content{background: #4fc3f7 !important; color: #111 !important; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;}"
+                            " .modal-content.azurlane-popup, .modal.show .modal-content.azurlane-popup{padding: 14px !important;}"
+                            " .modal-content.azurlane-popup h3, .modal-content.azurlane-popup div, .modal-content.azurlane-popup p, .modal-content.azurlane-popup span{color:#111 !important;}"
+                            " .modal-content.azurlane-popup .btn, .modal-content.azurlane-popup button{color:#111 !important;}"
+                            "</style>"
+                        )
+
+                        with popup("", content=put_html(modal_style), size=None) as p:
+                            put_html(
+                                '<div class="azurlane-popup" style="padding: 12px; text-align: center;">'
+                                + '<h3 style="margin:0 0 8px 0;">雪风大人新增碧蓝主题</h3>'
+                                + '<div style="font-size:0.95rem;margin-bottom:12px;">点击下方按钮即可立即应用碧蓝主题。</div>'
+                                + '</div>'
+                            )
+                            put_buttons(
+                                [
+                                    {"label": "立即应用碧蓝主题", "value": "apply", "color": "info"},
+                                    {"label": "不，谢谢", "value": "cancel", "color": "secondary"},
+                                ],
+                                onclick=[_apply_azurlane, _dismiss],
+                                scope=p,
+                            )
+                            run_js(
+                                "(function(){var m=document.querySelector('.modal.show .modal-content'); if(m) m.classList.add('azurlane-popup');})();"
+                            )
+                            run_js("localStorage.setItem('alas_azurlane_theme_notice_shown', '1')")
+            except Exception:
+                pass
+            
             # show something
             put_markdown(
                 """
