@@ -9281,6 +9281,10 @@
       "TargetZone": {
         "type": "input",
         "value": 0
+      },
+      "StayInZone": {
+        "type": "checkbox",
+        "value": false  
       }
     },
     "OpsiFleet": {
