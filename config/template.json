@@ -1963,6 +1963,7 @@
     },
     "OpsiHazard1Leveling": {
       "TargetZone": 0,
+      "YellowCoinPreserve": 100000,      
       "SirenResearch_Enable": false,
       "MinimumActionPointReserve": 200,            
       "ExecuteFixedPatrolScan": false

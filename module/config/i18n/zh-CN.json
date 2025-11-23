@@ -2781,6 +2781,10 @@
       "44": "44 | 西大陆架D",
       "22": "22 | NA海域西南B"
     },
+    "YellowCoinPreserve": {
+      "name": "保留x点黄币",
+      "help": "雪风大人温馨提示：低于此设置的黄币数量将不会运行侵蚀一nanoda!"
+    },     
     "SirenResearch_Enable": {
       "name": "塞壬研究装置",
       "help": "雪风大人提醒：消耗紫币换黄币，一个月没有几十万海里慎用nanoda!"
