@@ -176,6 +176,30 @@ Retirement:
   RetireMode:
     value: one_click_retire
     option: [ one_click_retire, enhance, old_retire ]
+YukikazeTaskManager:
+  TaskPriorityAdjustment:
+    type: textarea
+    value: |-
+      Restart
+      > OpsiCrossMonth
+      > Commission > Tactical > Research
+      > Exercise
+      > Dorm > Meowfficer > Guild > Gacha
+      > Reward
+      > ShopFrequent > ShopOnce > Shipyard > Freebies
+      > PrivateQuarters
+      > OpsiExplore
+      > Minigame > Awaken
+      > OpsiAshBeacon
+      > OpsiDaily > OpsiShop > OpsiVoucher
+      > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
+      > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
+      > Sos > EventSp > EventA > EventB > EventC > EventD
+      > RaidDaily > CoalitionSp > WarArchives > MaritimeEscort
+      > Event > Event2 > Raid > Hospital > HospitalEvent > Coalition > Main > Main2 > Main3
+      > OpsiMeowfficerFarming
+      > GemsFarming
+      > OpsiHazard1Leveling
 OneClickRetire:
   KeepLimitBreak:
     value: keep_limit_break
