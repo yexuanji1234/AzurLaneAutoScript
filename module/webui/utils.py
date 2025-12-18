@@ -368,7 +368,7 @@ def filepath_css(filename):
 def filepath_icon(filename):
     return f"./assets/gui/icon/{filename}.svg"
 
-
+'''
 def add_css(filepath):
     """
     Safely inject a CSS file into the document head.
@@ -393,8 +393,13 @@ def add_css(filepath):
     ) % json.dumps(css)
 
     run_js(js)
+'''
 
-
+def add_css(filepath):
+    with open(filepath, "r") as f:
+        css = f.read().replace("\n", "")
+        run_js(f"""$('head').append('<style>{css}</style>')""")
+        
 def _read(path):
     with open(path, "r") as f:
         return f.read()
